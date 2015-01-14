@@ -1,0 +1,150 @@
+\section{Node.js}
+
+A Node.js a Google által fejlesztett \emph{v8} JavaScript értelmezőt használó
+JavaScript futtatókörnyezet\cite{Node}, ami a Ruby-ból ismert Event Machine
+\cite{EventMachine} és a Python Twisted\cite{Twisted} moduljához hasonlóan
+működik, ám a felhasználó elől teljesen elrejti az \emph{eseményhurkot}
+(\secref{async-io}. fejezet).
+
+Az első verziót Ryan Dahl írta 2009-ben, azóta a projekt vezetése TJ Fontaine
+kezébe került\cite{Node-TJ}, jelenleg is fejlesztés alatt áll, a következő stabil verziója
+a v0.12 lesz. A szakdolgozatban elkészített szoftver a node 0.11-es verzióján
+fut, mivel sok olyan funkciót használ, ami a stabil ágon (0.10) nem elérhető.
+
+A Node.js-t már számos nagyvállalat használja, ami képes a régi,
+rugalmatlan Java (vagy .NET) alapú stack kiváltására.
+Az egyik legnagyobb sikertörténet a PayPalhoz fűződik, ahol a frontend
+szoftvert (a PayPal webes felületét) újraírták Java és Node.js alapokon is.
+\cite{PayPal-Case}
+
+A kísérlet során két ugyanolyan funkcionalitással (azonos specifikációval)
+rendelkező szoftver implementáltak Java-ban és Node-ban. Az eredény:
+az utóbbit fele annyi mérnök fele annyi idő alatt fejezte be,
+a kész szoftver pedig kétszer annyi HTTP kérést bírt kiszolgálni
+másodpercenként, mint az ekvivalens Java alkalmazás
+(a válaszidő is javult a harmadával), a Node.js verzió pedig nem is
+használta ki a Java verzióval ellentétben a többmagos környezet előnyeit.
+
+\subsection{Aszinkron IO}\label{sec:async-io}
+
+A Node.js a grafikus rendszerekben megszokott \emph{eseményhurok}-ra épít,
+azaz egy végtelen ciklusban várakozik eseményekre, majd azokat a megfelelő
+\emph{callback} függvényeknek továbbítja.
+
+A platformon alapvetően minden IO-t érintő hívás aszinkron,
+azaz a függvényhívás nem blokkol, hanem az IO művelet befejezése után
+a megadott \emph{callback} függvény fut le. Természetesen lehetőség van
+szinkron végrehajtásra is, azonban ezeket egyszerű konzolos
+alkalmazásokhoz érdemes csak használni.
+
+Szemléltetésképpen egy szinkron hívás:
+
+\begin{js}
+var result = http.get('http://nodejs.org');
+\end{js}
+
+A \verb=http.get= függvény itt blokkol, azaz addig, amíg a művelet nem
+fejeződik be, a program nem tud tovább futni, ``lefagy''.
+Ezt elkerülendő, a Node az aszinkron működést támogatja:
+
+\begin{js}
+http.get('http://nodejs.org', function(err, result) {
+  // hiba, illetve az eredmény kezelése
+});
+\end{js}
+
+A \verb=http.get= itt rögtön visszatér (végül pedig az eseményhurokban fog
+várakozni az alkalmazás), és ha megérkezett a válasz(esemény),
+a futtatókörnyezet lefuttatja a hozzárendelt \emph{callback} függvényt.
+
+Hagyományos szinkron hívásoknál ha több \verb=get= hívást szeretnénk
+végrehajtani, akkor az egyetlen lehetőségünk a szálak használata.
+A szálak nem skálázhatóak, erőforrás-pazarlóak (rengeteg memóriát igényelnek,
+mivel saját \emph{stack}-re van szükségük).
+Egy node folyamat képes akár párhuzamosan több tízezer HTTP kérést
+is kiszolgálni, a hagyományos, thread pool alapú megoldással ez
+elképzelhetetlen.
+Volt már rá példa, hogy egyetlen node folyamat egymillió TCP kapcsolatot
+tartott fönn\cite{Node-1M}, mindössze 16GB memóriát igényelve.
+Szál-alapú megoldással ugyanehhez 4TB memóriára volna szükség (amennyiben
+az átlagosnak mondható 4MB-os stack mérettel számolunk)
+
+A megoldás hátránya a bonyolultabb kód, erre a problémára a generátorok
+jelentik a megoldást (\secref{async}. fejezet).
+
+Az egyszálú működés másik hátránya, hogy a különösen CPU-intenzív feladatokra
+nem célszerű használni, hiszen bár az IO hívások aszinkronak, a többi
+művelet szinkron, így egy sokáig blokkoló (CPU-t használó) kérés miatt az
+utána érkező kérések addig nem kerülnek kiszolgálásra, amíg az előző be nem
+fejeződött, nem tapasztaljuk a szálaknál megszokott preemptív működést.
+
+A problémára részben megoldást nyújthat, ha több node kiszolgáló folyamatot
+indítunk el (pl amennyi processzor rendelkezésre áll a rendszeren), ezzel
+az egyszálú működés hatékonyságán javítottunk, azonban a node nem-preemptív
+természetén nem változtat.
+
+Természetesen létezik megoldás arra, hogy szálakat használjunk: natív modulokat
+kell írnunk (C++-ban), vagy egy erre specializált modult használnunk,
+amivel JavaScriptet futtató szálakat tudunk létrehozni, ez utóbbira példa
+a \verb=threads_a_gogo= könyvtár.\cite{Threads-a-gogo}
+Jelen szakdolgozatnak nem célja ezeket a
+megoldásokat bemutatni, így a továbbiakban mindig egyszálú működést lehet
+feltételezni.
+
+\subsection{CommonJS modulok}
+
+A node programok modulokból épülnek fel, amik a CommonJS specifikációt követik
+\cite{CommonJS}.
+Minden modul a következő struktúrát mutatja:
+
+\begin{js}
+var beep = require('beep');
+
+module.exports = function beepboop() {
+  beep();
+  console.log('boop');
+};
+\end{js}
+
+Azaz meglévő modulokat a \verb=require= függvénnyel tudunk beimportálni,
+a modul által nyújtott API-t pedig a \verb=module.exports=
+(illetve \verb=exports=) változón keresztül tudjuk módosítani.
+
+\subsection{npm}
+
+A node szerves része a beépített csomagkezelő, az \verb=npm=, amivel a
+felhasználók által írt modulokat tudjuk telepíteni, illetve magunk is
+publikálhatunk modulokat. Jelen sorok írásakor az \verb=npm= csomagok száma
+már átlépte a 100000-t\cite{NPM-100K},
+ez több, mint bármelyik másik csomagkezelő rendszerben lévő csomagok száma
+(a második legnagyobb a Java Maven, körülbelül 80000 csomaggal).
+
+Egy csomag az
+
+\begin{sh}
+$ npm install [név]
+\end{sh}
+
+paranccsal telepíthető.
+
+A csomagok része a \verb=package.json= fájl, ami metainformációkat tartalmaz a
+csomagról: név, verzió, függőségek, a részletes leírás megtalálható az
+\verb=npm= oldalán\cite{Package-JSON}.
+
+\subsection{Szemantikus verziókezelés}
+
+Az \verb=npm= modulok az ún. \emph{semantic versioning}-et követik\cite{Semver},
+ez azt jelenti, hogy a modul három verziószámmal rendelkezik:
+
+\begin{description}
+\item[major] Fő verzió szám, az azonos számmal rendelkező release-ek garantáltan
+azonos API-val rendelkeznek, így a csomagok frissítése egyszerűen
+automatizálható
+\item[minor] Alverzió, a visszafelé kompatibilis változásokat lehet ennek a
+számnak a növelésével jelezni.
+\item[patch] A kisebb hibajavítások után célszerű ezt a számot növelni.
+\end{description}
+
+Amennyiben a publikált modulok betartják ezeket a konvenciókat, úgy
+a csomagfrissítések automatizálhatóak, hiszen a modul bármikor magasabb
+\emph{minor} verzióra frissíthető, mert az garantáltan visszafelé kompatibilis.

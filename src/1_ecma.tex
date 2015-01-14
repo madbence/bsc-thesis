@@ -1,0 +1,83 @@
+\section{JavaScript}
+
+A JavaScript egy dinamikus, gyengén típusos nyelv, amit Brendan Eich
+fejlesztett ki 1995-ben \emph{Mocha} kódnéven, megjelenésekor LiveScript néven,
+és a Netscape böngészőben nyújtott támogatást különböző felhasználói
+interakciókhoz.\cite{JSAnnounce}
+
+Szintaktikáját tekintve a C-típusú nyelvek közé sorolható (ahogy a C++, Java és
+C\# is), azonban ezektől eltérően az öröklési modellje nem osztály, hanem
+prototípus alapú. Ez a különbség sok félreértésre ad okot a nyelv használóinak
+körében, megítélése pont emiatt nagyon szélsőséges.
+
+A nyelvet később az Ecma International karolta fel, ami azóta is karbantartja
+a nyelv specifikációját.
+
+\subsection{ECMAScript}
+
+Az ECMAScript a JavaScript nyelv specifikációja (a JavaScript név hivatalosan
+a Mozilla tulajdona, így valójában a ma elterjedt nyelvre ECMAScript néven
+lenne helyes hivatkozni), aminek a sorsáról a TC39 (Technical Committee)
+csoport tagjai döntenek.\cite{TC39}
+
+A tagok különböző, főleg IT-val foglalkozó vállalatok által delegált mérnökök,
+többek között Google, Intel, Microsoft, Mozilla, Apple, eBay
+alkalmazottak.
+A nyelv ettől függetlenül a felhasználók aktív közreműködésével készül,
+bárki tehet javaslatokat a specifikációt illetően (pl. a specifikáció hivatalos
+levelezőlistáján\cite{ESDiscuss}).
+
+\subsubsection{ECMAScript 1}
+
+Az első verzió\cite{ECMAScript-1} 1997-ben jelent meg, gyakorlatilag csak egy
+formális specifikációt nyújtott a már meglévő nyelv számára,
+így más böngészőkben is azonos működésű nyelvet lehetett implementálni.
+
+\subsubsection{ECMAScript 3}
+
+A második verzió túl sok újdonságot nem tartalmazott, az ECMAScript 3 azonban
+számos új nyelvi elemet vezetett be\cite{ECMAScript-3}, többek között
+a \verb=try{ } catch(e) { }= szerkezetet, illetve a reguláris kifejezéseket.
+
+A ma használt összes böngésző teljes támogatást nyújt a nyelvhez.
+
+\subsubsection{ECMAScript 4}
+
+A következő verzió olyan sok új elemet tartalmazott, hogy végül sokat közülük
+véglegesen elvetettek, másokat a \emph{Harmony} projectbe helyeztek át,
+amiből később a 6-os és 7-es verziók merítettek ötleteket.
+A specifikáció soha nem készült el teljesen.
+
+\subsubsection{ECMAScript 5}
+
+A 2009-ben elkészült specifikációt a ma használt szinte összes modern böngésző 
+támogatja (vagy a javított, 5.1-es változatot\cite{ECMAScript-5}).
+A 3-as verzióhoz képest tartalmazza a getterek, setterek specifikációját,
+natív JSON támogatást, illetve egységesítette a korábban használt
+reflection módszereket.
+
+Tartalmazza az ún. \emph{strict} módot, amivel a leggyakrabban elkövetett
+hibákat statikus analízis eszközökkel ki lehet szűrni már a fejlesztés korai
+szakaszában.
+
+\subsubsection{ECMAScript 6}
+
+Jelenleg is fejlesztés alatt áll\cite{ECMAScript-6},
+jelentős újdonságokat tartalmaz, az egyik legnagyobb újítás az osztályok
+és modulok bevezetése, generátorok, beépített \verb=Map=, \verb=Set=,
+\verb=WeakMap= adatszerkezetek, a metaprogramozáshoz nélkülözhetetlen
+\verb=Proxy=-k.
+
+Jelenleg a böngészők csak részben támogatják, ám folyamatosan zajlik az átállás.
+Az általam megírt szoftver erőteljesen épít a generátorokra.
+
+Különböző eszközökkel az ES6 kód ES5-re fordítható (pl. Traceur, 6to5), így
+az új verzióban írt kódot is lehet futtatni a mai böngészőkben.
+Pl. az AngularJS 2.0 az elsők között lévő keretrendszer,
+ami már teljesen ezekre az új alapokra épít.
+
+\subsubsection{ECMAScript 7}
+
+A fejlesztés korai stádiumában van, a tervek között szerepel az \emph{operator
+overloading} támogatása, érték típusok (saját primitív típusok), \verb=async=
+függvények, mintaillesztés.

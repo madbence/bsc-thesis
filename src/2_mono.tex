@@ -1,0 +1,33 @@
+\section{Monolitikus architektúra}
+
+Egy \emph{monolitikus} alkalmazás önálló egységet alkot, kompakt, viszonylag
+kevés külső függőséggel rendelkezik. Többnyire rétegelt, vagy hexagonális
+felépítéssel bír. Ez több előnnyel is jár:
+
+\begin{itemize}
+  \item A fejlesztés egyszerű, hiszen a rendelkezésre álló fejlesztőkörnyezetek
+    (pl. Visual Studio) ezt a fajta architektúrát támogatják.
+  \item Egyszerű az üzemeltetés, hiszen az alkalmazást könnyű deployolni, mivel
+    az egyedül is képes a komplett funkcionalitást biztosítani.
+  \item Több példányt elindítva a skálázás megoldható, akár automatikusan is,
+    ehhez a gyakorlatban csak egy terheléselosztóra van szükség.
+\end{itemize}
+
+A hátrányai pont ezek miatt:
+
+\begin{itemize}
+  \item A komplex alkalmazások komplex fejlesztőkörnyezetet igényelnek, ami
+    megnövekedett erőforrásigénnyel jár.
+  \item A komplexitás következtében az alkalmazás nagyon nagy, adott esetben
+    az inicializálás ideje nagyon nagyra nőhet, ami a skálázhatóságot rontja.
+  \item A skálázási lehetőségek nagyon limitáltak, legtöbb esetben
+    erőforráspazarlóak, hiszen az egyetlen lehetőség a több példányos futtatás.
+    Ezzel nem csak a szűk keresztmetszetet jelentő komponenst duplikáltuk,
+    hanem mindent.
+  \item A szoros csatolás miatt megnő a \emph{vendor lock-in} veszélye,
+    azaz más technológiára váltás, vagy akár csak egy verziófrissítés
+    nagyon komoly kihívást jelent.
+  \item Bár egy szakdolgozatban nem okoz problémát, de valódi enterprise
+    környezetben egy folyamatban lévő projectbe bekapcsolódás nagyon nehézkes,
+    hiszen a fejlesztőnek meg kell értenie az alkalmazást, át kell látnia azt.
+\end{itemize}

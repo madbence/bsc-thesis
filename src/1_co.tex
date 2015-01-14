@@ -1,0 +1,173 @@
+\section{A \texttt{co} könyvtár}
+
+Az aszinkron működés egyik legnagyobb hátránya, hogy az elkészült program
+nehezen átlátható, gyakori az ún. \emph{callback hell} jelenség:
+
+\begin{js}
+asyncOp(function() {
+  asyncOp(function() {
+    asyncOp(function() {
+      done();
+    });
+  });
+});
+\end{js}
+
+A probléma megkerülésére több megoldás is létezik, a gyakorlatban a
+\emph{Promise} illetve a \emph{generátor} alapú megközelítést alkalmazzák.
+
+Az előbbi nem igényel új nyelvi elemet, azonban rendkívül sok \emph{boilerplate}
+kóddal jár:
+
+\begin{js}
+asyncOp().then(function() {
+  return asyncOp();
+}).then(function() {
+  return asyncOp();
+}).then(done);
+\end{js}
+
+Pont az ilyen problémák miatt döntöttem amellett, hogy a generátor-alapú
+megközelítést használjam az elkészített alkalmazásban.
+Ennek használatát könnyíti meg a \verb=co= könyvtár.
+
+\subsection{Generátor függvények}
+
+Az ECMAScript 6 egyik legnagyobb újdonsága a generátorok bevezetése,
+amelyek a C\# \verb=yield=\cite{CSYield} kulcsszavához hasonló működést
+produkálnak.
+Segítségével képesek vagyunk a lusta kiértékelést használva
+potenciálisan végtelen szekvenciákon végigiterálni.
+
+\begin{js}
+function* squares() {
+  for(var i = 1;; i++) {
+    yield i * i;
+  }
+}
+
+for(var n of squares()) {
+  if (n > 100) {
+    break;
+  }
+  console.log(n);
+}
+\end{js}
+
+A példakódban a \verb=function*= kulcsszó jelzi, hogy egy generátor függvényt
+definiálunk, a függvény pedig az összes négyzetszámot generálja
+(ami természetesen egy végtelen szekvencia). A \verb=for-of= konstrukcióval
+a generátor értékein tudunk végigiterálni.
+Mivel egy végtelen hosszú listát nem tudunk kiértékelni, az első 10
+négyzetszám után megszakítjuk a futást.
+
+Az iterációt megkönnyítő \verb=for-of= csak szintaktikus édesítőszer,
+a generátort magunk is léptethetjük a \verb=next()= metódussal:
+
+\begin{js}
+var s = squares();
+for(;;) {
+  var result = s.next();
+  if (result.done || result.value > 100) {
+    break;
+  }
+  console.log(result.value);
+}
+\end{js}
+
+Elsp lépésként példányosítjuk a generátort (szintaktikailag ez megegyezik
+a függvényhívással), majd a generátorpéldányt léptetjük a \verb=next()=
+metódussal. Ekkor megkapjuk a generátorban a \verb=yield= által kiszámolt
+értéket (\verb=result.value=). Ha a generátort nem lehet tovább léptetni,
+a \verb=result.done= változóba \verb=true= érték kerül.
+
+\subsection{Aszinkron működés generátorokkal}\label{sec:async}
+
+Sajnos a nyelv a C\#-ban ismert \verb=async-await= konstrukciót nem támogatja
+(feltehetően csak az ES7-ben lesz a nyelv része),
+azonban a megfelelő \emph{wrapper} függvény meghívásával ahhoz nagyon hasonló
+működés emulálható, azaz a megfelelő helyen (aszinkron függvényhívásoknál)
+a futás felfüggesztődik, az eseményhurok képes más feladatokat végrehajtani,
+majd ha a művelet befejeződött, a vezérlést visszakerül a megfelelő helyre.
+
+Ehhez a már meglévő aszinkron függvényeinket kell becsomagolni úgy,
+hogy azok ne vegyenek át \emph{callback} függvényt, hanem egy ún.
+\emph{thunk}-ot adjanak vissza, amit aztán a megfelelő modul képes meghívni.
+
+\begin{js}
+function thunkify(fn) {
+  var args = [].slice.call(arguments);
+  var thisArg = this;
+  return function thunk(cb) {
+    return fn.apply(thisArg, args.concat[cb]);
+  };
+}
+\end{js}
+
+A \verb=thunkify= függvény egy becsomagolandó függvényt (\verb=fn=) vár,
+és a becsomagolt függvényt (\verb=thunk=) adja vissza. Ezzel tulajdonképpen
+\emph{lekötjük} a függvény első $n$ argumentumát.
+
+A \verb=thunk=-ot generálva a generátort futtató modul egy speciális
+callback függvénnyel hívja meg, ami pusztán arra szolgál,
+hogy a generátort tovább léptesse.
+Ennek a lehető legegyszerűbb megvalósítása:
+
+\begin{js}
+function run(gen) {
+  var instance = gen();
+  function cont(thunk) {
+    thunk(function (err, result) {
+      var ret;
+      if (err) {
+        ret = instance.throw(err);
+      } else {
+        ret = instance.next(result);
+      }
+      if (ret.value) {
+        cont(ret.value);
+      }
+    });
+  }
+  cont(instance.next().value);
+}
+\end{js}
+
+Az általam írt \verb=genzen= könyvtár hasonló funkcionalitást nyújt,
+ám nem csak \emph{thunk}-ot fogad el, hanem \emph{promise}-t is,
+a szakdolgozatban azonban a \verb=co= modult\cite{Co} használom,
+mivel támogatja a párhuzamosítást, illetve mert rengeteg modul érhető el hozzá.
+
+Használata nagyon egyszerű:
+
+\begin{js}
+function sleep(ms) {
+  return function (cb) {
+    setTimeout(cb, ms);
+  }
+}
+
+co(function* () {
+  console.log(1);
+  yield sleep(1000);
+  console.log(2);
+});
+\end{js}
+
+A példában a két \verb=console.log= hívás 1000ms különbséggel hívódik meg.
+
+A modul támogatja a párhuzamosságot:
+
+\begin{js}
+  co(function* () {
+    var pages = yield [
+      http.get('https://nodejs.org'),
+      http.get('https://npmjs.org'),
+    ];
+    console.log(pages);
+  });
+\end{js}
+
+A példában a \verb=pages= változó értékébe a felsorolt két honlap tartalma
+kerül, a letöltés párhuzamosan történik, a művelet végén a szinkronizációt
+is megoldja a modul.

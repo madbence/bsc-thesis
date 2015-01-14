@@ -1,0 +1,26 @@
+\section{Microservice architektúra}
+
+A microservice architektúra szinte pontosan az előző ellentéte.
+Az egyes szoftverkomponensek önállóan is futtatható alkalmazások,
+a futtatáshoz nagyon kevés erőforrásra van csak szükség, a feladatuk
+ellátásához azonban szükség van sok másik komponensre.
+
+A komponensek közti kommunikáció valamilyen jól definiált, nyelvfüggetlen
+interfészen keresztül zajlik (pl HTTP fölötti JSON kommunikáció, vagy
+valamilyen alacsony szintú, TCP/UDP fölött definiált protokoll).
+
+A megoldás előnye, hogy a skálázás sokkal rugalmasabb, elegendő csak a szűk
+keresztmetszetet jelentő komponenseket skálázni, így adott esetben
+jelentősen kevesebb erőforrás is elengendő a megfelelő szolgáltatási
+szint biztosításához.
+
+Az architektúra további előnye, hogy technológiafüggetlen, hiszen az egyes
+komponensek teljesen függetlenek egymástól, csak a megfelelő interfészeket
+kell biztosítaniuk egymásnak. Egy rétegelt architektúrában ez többnyire nem
+megoldható.
+
+Természetesen hátrányok is vannak, az egyik legnyilvánvalóbb, hogy az
+üzemeltetés bonyolultabb, amennyiben nem megfelelő eszközöket használunk.
+A sok különálló komponens egyenkénti deployolása, illetve konfigurálása
+manuálisan nagyon nehézkes, de vannak eszközök, amikkel az egész folyamat
+teljesen automatizálható.

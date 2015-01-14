@@ -1,0 +1,41 @@
+\subsection{\texttt{logify}}
+
+Mivel a cél egy lazán csatolt rendszer megtervezése, így nem célszerű
+közvetlenül az InfluxDB interfészét használni, azt érdemes egy köztes rétegen
+keresztül használni. Ennek a szerepét tölti be az általam írt \texttt{logify}
+modul.\cite{Logify}
+
+A modul egyszerű metódusokat biztosít események naplózására, amik a háttérben
+tetszőleges (akár egyszerre több) rendszernek továbbítódnak.
+
+\begin{js}
+var logify = require('logify');
+var logger = logify();
+
+logger.info('This is a message %d', 1337);
+logger.debug({
+  foo: 'bar',
+}, 'This is a debug message with context');
+\end{js}
+
+Az elérhető naplózási szintek megfelelek a sztenderd \emph{syslog} szinteknek,
+így alapértelmezetten a \verb=logify-syslog-levels= csomagban definiált
+szinteket használja, de ez természetesen felüldefiniálható.
+
+A naplózó rendszer alapértelmezetten a sztenderd kimenetre ír, ám tetszőleges
+másik \emph{transport} is hozzáadható, többek között InfluxDB csatoló is.
+
+Az egyes események rövid szöveges üzenettel jellemezhetőek, azonban csatolható
+hozzájuk kontextus, pl. az egyes metrikák aktuális értékei, az esemény típusa,
+stb. Az egyes transportok saját hatáskörükben döntik el, hogy ezekkel az
+értékekkel mit kezdenek, hogyan szerializálják, illetve hogyan továbbítják
+a távoli szervernek.
+
+A \verb=child(ctx)= metódussal a naplózó egy kiterjesztett példányát lehet
+létrehozni, ami minden eseményhez automatikusan csatolja a paraméterben
+átadott \verb=ctx= kontextus-objektumot. Ezzel a módszerrel könnyen tudjuk
+fa struktúrába szervezni a naplózó rendszereinket.
+Az alkalmazásban azt a megközelítést használom, hogy minden HTTP kérés
+saját naplózót kap, amihez a HTTP kérés kontextusa automatikusan csatolva
+van, így minden eseménynél tudjuk, hogy azt pontosan milyen HTTP kérés
+váltotta ki.

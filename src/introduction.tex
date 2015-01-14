@@ -1,0 +1,71 @@
+%------------------------------------------------------------------------------
+\chapter{Bevezető}
+%------------------------------------------------------------------------------
+
+\section{A megoldandó probléma}
+
+A Twitter közösségi platform segítéségével a felhasználók rövid szöveges
+(maximum 140 karakteres) tartalmakat tudnak megosztani egymással.
+Az átlagos felhasználó valamilyen mobil eszközön használja a szolgáltatást.
+\cite{About-Twitter}
+
+Mivel a közölt tartalmak (\emph{tweetek}) nagyon rövidek, a felhasználók
+sokkal többet is tweetelnek, mint mondjuk egy blog esetén.
+A tipikus felhasználó csak az elmúlt néhány óra eseményeit tudja követni
+(vagy még kevesebbet), hiszen egész egyszerűen az információ sokkal
+gyorsabban áramlik, mint ahogy a felhasználó azt fel tudná dolgozni.
+
+Pontosan emiatt nagyon nehéz a platformot információk hatékony, gyors
+terjesztésére használni. Egy tweet nagyon gyorsan elveszik az információk
+rengetegében, több tweet azonban negatívan hat azokra a felhasználókra,
+akik folyamatosan követik az eseményeket.
+
+Az általam írt szoftver ezt a problémát próbálja meg megoldani úgy,
+hogy a felhasználó követő bázisának szokásait elemezve megmondja azt az
+idő intervallumot, amikor a tweet a legtöbb emberhez eljuthat.
+Mivel a tweetek nézettségét mérni nagyon limitáltan lehet,
+a rendszer gyakorlatilag fekete dobozként viselkedik,
+így azt az egyszerű hipotézist állítottam föl,
+hogy a legideálisabb időpont az, amikor a legtöbb felhasználó online,
+azaz épp a Twittert használja valamilyen felületen keresztül.
+Ez szintén nem mérhető közvetlenül, így online felhasználónak az számít,
+aki éppen tweetelt (pl. az elmúlt 15 percben).
+
+Természetesen ez a heurisztika nem pontos, hiszen nem foglalkozik azokkal,
+akik nem tweetelnek, vagy esetleg szeretik akár több napra visszamenőleg
+átolvasni az falukat. Ezek olyan tényezők, amiket közvetlenül nem,
+közvetve is csak nagyon körülményesen lehet mérni, ezeknek a szokásoknak
+a figyelembevétele messze túlmutat a dolgozat keretein.
+
+\section{Szükséges lépések a megoldáshoz}
+
+A probléma ismeretében a következő részproblémákat határoztam meg,
+amiket a programnak meg kell oldania:
+
+\begin{itemize}
+  \item A szoftvernek rendelkeznie kell egy webes felülettel, amin keresztül a
+felhasználó azonosítása megtörténhet.
+  \item A szükséges adatokat \emph{on-demand} jelleggel nem lehet lekérdezni,
+mert hosszadalmas folyamat, így szükség van a háttérben futó feldolgozó
+egységekre.
+  \item Az elosztott működést koordinálni kell, az egyes komponenseknek
+kommunikálniuk kell egymással, ezt az összekötő réteget is meg kell valósítani.
+  \item A folyamatok monitorozása fontos a rendszer elemzéséhez, így
+szükséges egy rugalmas naplózó rendszer integrálása.
+\end{itemize}
+
+\section{A dolgozat felépítése}
+
+A dolgozat második fejezetében ismertetem a rendelkezésre álló technológiákat,
+azok szerepét a megvalósításban, röviden ismertetem a főbb tulajdonságaikat,
+illetve megindoklom, hogy miért döntöttem az adott technológiák mellett,
+esetenként összehasonlítva más alternatívákkal őket.
+
+A harmadik fejezetben ismertetem az alkalmazás egyes tervezési döntéseit,
+a lehetséges alternatívákkal együtt. Kitérek a felmerülő technikai problémákra,
+illetve bemutatom a konkrét szoftvert feladatban kitűzött
+problémák megoldására.
+
+Az utolsó fejezet néhány mérési eredményt mutat be a rendszer működéséről,
+illetve kitekintés, hogy hogyan lehetne további funkciókkal kiegészíteni
+a rendszert, milyen további előnyök származnának belőle.

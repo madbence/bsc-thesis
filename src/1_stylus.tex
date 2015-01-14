@@ -1,0 +1,36 @@
+\section{Stylus}
+
+A böngészőben történő korszerű megjelenéshez szükség van CSS stílusfájlokra,
+azonban a leírónyelv meglehetősen kényelmetlen, így helyette a CSS-re forduló
+Stylus\cite{Stylus} nyelvet használtam.
+
+A szintaxis támogatja az egymásba ágyazott CSS szelektorokat, illetve
+számos programozási nyelvi eszköz érhető el benne
+(változók, ciklusok, elágazások, függvények, stb.),
+de a legnagyobb erénye, hogy rendkívül kompakt:
+
+\begin{stylus}
+body
+  font-size 16pt
+  h1
+    color red
+\end{stylus}
+
+A fenti kódból a \verb=stylus= bináris az alábbi CSS kódot generálja:
+
+\begin{css}
+body {
+  font-size: 16pt;
+}
+body h1 {
+  color: #f00;
+}
+\end{css}
+
+Maga a fordító szintén Node.JS alapú, az egyszerű fordításon kívül
+természetesen a fejlesztést nagyban megkönnyítő automatikus fordítást is
+támogatja:
+
+\begin{sh}
+  $ stylus --watch style.styl -o style.css
+\end{sh}

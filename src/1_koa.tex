@@ -1,0 +1,174 @@
+\section{\texttt{koa}}
+
+A node legelterjedtebb webes keretrendszere az \verb=express=\cite{Express}
+framework, ami a beépített \verb=http= modulra (webszerver) épül,
+és kibővíti azt kényelmes routing lehetőségekkel,
+illetve ún. \emph{middleware}-ek használatával szabhatjuk testre a működését.
+
+A \verb=koa=\cite{Koa} ennek a következő generációs megfelelője,
+elődjéhez képest sokkal letisztultabb, elegánsabb interfészt nyújt,
+szinte teljesen a fejlesztőre bíz minden fontos architekturális döntést,
+az aszinkron működéshez a \verb=co= modult és generátorokat használ.
+
+\subsection{Middleware-alapú architektúra}
+
+A \verb=koa= esetében a middleware egy egyszerű generátor, aminek a feladata
+az érkező kérés lekezelése, majd a vezérlés továbbadása a következő
+middleware rétegnek, majd végül az érkező válasz további manipulálása.
+Természetesen egyik lépés sem kötelező, minden logika implementálása a
+fejlesztőre van bízva. Egy tipikus middleware (ez esetben egy naplózó)
+felépítése:
+
+\begin{js}
+var koa = require('koa');
+var app = koa();
+
+app
+  .use(function* log(next) {
+    var start = Date.now();
+    yield* next;
+    console.log(
+      'Request to %s took %d ms',
+      this.url,
+      Date.now() - start
+    );
+  });
+\end{js}
+
+Első lépés az alkalmazás létrehozása, majd az alkalmazáshoz hozzáadjuk az
+általunk megírt middleware-t a \verb=use= metódussal.
+A generátor egyetlen paramétert vár (\verb=next=), amivel a vezérlést
+tovább tudjuk adni a soron következő rétegnek.
+A példa middleware egyszerű naplózást valósít meg, a szabványos kimenetre
+írja az érkező HTTP kéréseket, illetve a hozzájuk tartozó válaszidőt.
+Elsőként eltároljuk az aktuális időbélyeget (``leszálló'' ág),
+majd a \verb=yield* next= utasítással delegáljuk a következő generátornak a
+vezérlést (a \verb=yield*= kulcsszó nem szakítja meg a generátor futását,
+csak tovább delegálja azt), végül a ``felszálló'' ágon elvégzi a szükséges
+naplózást (\verb=console.log= hívás).
+A működésre az egyik legszemléletesebb analógia a böngészők DOM eseménykezelése,
+ahol a \verb=yield* next= előtti rész az esemény \emph{capture} fázisának,
+az azutáni rész pedig a \emph{bubble} fázisnak felel meg.
+
+Természetesen léteznek ennél egyszerűbb middleware-ek, egy \emph{hello world}
+alkalmazás szerkezete az alábbi:
+
+\begin{js}
+var koa = require('koa');
+var app = koa();
+
+app.use(function* hello() {
+  this.body = 'Hello world!';
+});
+\end{js}
+
+A \verb=this= jelenti a HTTP kérés kontextusát, a \verb=body= adattag pedig
+a kérésre adott választ jelenti. Ez lehet egy egyszerű \verb=String=, de akár
+JSON objektum is, ekkor a megfelelő HTTP válasz fejléc is beállítódik
+(\verb=Content-Type: application/json=), az objektum pedig szerializálódik.
+A válasz opcionálisan akár \verb=Stream= is lehet, ez akkor lehet hasznos,
+ha pl. fájlokat szeretnénk kiszolgálni, és a teljes eredményt nem kívánjuk
+(vagy nem is tudjuk) a memóriában tárolni, hanem folyamatosan szeretnénk
+a kliensnek továbbítani.
+
+\subsection{Általános struktúra}
+
+A \verb=koa= alkalmazások maguk is middleware-ként viselkednek,
+így azokat egyszerűen tudjuk egymásba ágyazni.
+Az általános konvenció az, hogy egy fő alkalmazásba felvesszük a közösen
+használt modulokat, majd azok alá felvesszük a megfelelő route-okon hallgató
+önálló alkalmazásokat, így az elkészült szoftver laza csatolású, hiszen
+a használt alkalmazások tetszőlegesen válogathatóak össze, azokat könnyen
+fel lehet használni újra.
+
+A \verb=koa= beépítetten csak egyetlen middleware-t (\verb=respond=) tartalmaz,
+aminek a feladata pusztán a kéréshez tartozó kontextus inicializálása, illetve
+egy 404-es hibakód visszaadása, ha egyik további middleware sem kezelte
+le a kérést (nem állított be választ).
+
+\subsection{Routing megoldások}
+
+Természetesen a fejlesztő megírhatja a saját routing modulját,
+azonban rendelkezésre állnak kész megoldások, amik ezt nagyban megkönnyítik.
+Ezek közül az egyik a \verb=koa-route= modul, ami a megfelelő HTTP
+metódusokra illeszkedő middleware generátorfüggvényeket gyárt az általunk
+megadott kontrollerhez
+
+\begin{js}
+var koa = require('koa');
+var route = require('koa-route');
+var get = route.get;
+var app = koa();
+
+app
+  .use(get('/users/:id', showUser));
+\end{js}
+
+A \verb=get= függvény paraméterként egy sztring mintát,
+illetve egy middleware-t vár, és egy olyan middleware-t ad vissza,
+ami a megfelelő mintára illeszkedő HTTP kéréseket továbbítja az átadott
+kontrollernek (paraméterként pedig átadja az illesztett \verb=id= paramétert),
+minden mást kérést átenged a soron következő middleware-nek.
+
+A másik modul a \verb=koa-mount=, ezzel komplett \verb=koa= alkalmazásokat
+tudunk URL-transzparens módon egymásba illeszteni, azaz az egyes
+alrendszereknek nem kell tudnia teljes URL-ről.
+
+\begin{js}
+var mount = require('koa-mount');
+
+users
+  .use(get('/:id', showUser));
+
+messages
+  .use(get('/:id', showMessage));
+
+app
+  .use(mount('/users', users))
+  .use(mount('/messages', messages));
+\end{js}
+
+A példában két \verb=koa= alrendszert (\verb=users= és \verb=messages=)
+fogunk össze, melyek a \verb=/users= illetve a \verb=/messages= útvonalakon
+hallgatnak. Az egyes alkalmazások nem tudnak (nem is tudhatnak) a
+teljes elérési útról. A modult használva tetszőleges alkalmazások fűzhetőek
+össze anélkül, hogy a moduljuk kódját módosítani kéne, így az eredmény
+egy lazán csatolt, könnyen bővíthető architektúra.
+
+\subsection{REST API}
+
+A \emph{REST}\cite{REST} (Representational state transfer) egy konvenció a HTTP fölött
+történő kommunikációra. A rendszerben erőforrásokat definiálunk
+(pl. \emph{felhasználó}, \emph{üzenet}, stb.), ezekhez azonosítót rendelünk,
+az erőforrásokat pedig ezen az URI-n (Uniform Resource Identifier) tudjuk
+elérni, illetve manipulálni. Erre szolgálnak a különböző HTTP metódusok:
+
+\begin{description}
+  \item[GET] Adott erőforrás (vagy erőforrások) elérésére szolgál.
+    Idempotens művelet, azaz a kimenete mindig ugyanaz, a meghívások számától
+    függetlenül, és biztonságos is, az erőforrást nem módosítja, manipulálja.
+  \item[POST] Új erőforrást hoz létre, nem idempotens.
+  \item[DELETE] Adott erőforrást töröl, idempotens, de nem biztonságos, hiszen
+    módosítja az erőforrást.
+  \item[PUT] Az erőforrás \emph{teljes} leírását frissíti, idempotens, de nem
+    biztonságos művelet.
+  \item[PATCH] Az erőforrást \emph{részlegesen} frissíti, ugyanazon
+    tulajdonságokkal rendelkezik, mint a PUT metódus.
+\end{description}
+
+Ezek a műveletek mind jól lefordíthatóak a rendszerben lévő modellek
+metódushívásaira, így célszerűnek láttam, hogy ezeket a nagyon hasonló
+műveleteket mind kiemeljem paraméterezhető middleware-kbe, amiket az alkalmazás
+fejlesztése során többször is újra fel lehet használni.
+
+Ilyen jellegű művelet a \emph{resolve}, ami a megadott (\verb=/resource/:id=)
+alakú URI-ket képes feloldani valódi erőforrásokra:
+
+\begin{js}
+module.exports = function (name, resolver) {
+  return function* resolve(id, next) {
+    this[name] = yield* resolver(id);
+    yield* next;
+  };
+};
+\end{js}

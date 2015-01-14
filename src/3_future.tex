@@ -1,0 +1,27 @@
+\section{Kitekintés: automatizálás}
+
+A microservice architektúra legnagyobb hátránya, hogy az egyes komponensek
+kézi menedzselése nagyon kényelmetlen, egy adott komponensszám felett
+pedig gyakorlatilag lehetetlen.
+
+A problémára megoldást jelent, ha az egyes komponenseket egy egységes
+felületen keresztül tudjuk menedzselni, a deploy pedig teljesen automatikusan
+zajlik, a komponensek konfigurációja pedig szintén automatikus.
+
+A közös interfészre megoldást nyújtanak a különböző \emph{containerization}
+technológiák, pl. a Docker\cite{Docker}, ami izolációs konténereket nyújt alkalmazásoknak,
+az különböző konténerek pedig a Docker szoftveren keresztül egységesen
+menedzselhetők
+
+Az automatikus deployra több megoldás is létezik, többek között ilyen
+a Python alapú Ansible\cite{Ansible}, ami távoli szerverek menedzselését teszi lehetővé
+egyszerűen. Ilyen a megfelelő komponensek feltelepítése, frissítése,
+konfigurálása.
+
+A konfigurációmenedzsment teszi lehetővé, hogy az egyes komponensek
+képesek legyenek automatikusan felismerni, hogy a számukra releváns egyéb
+szolgáltatások milyen végpontokon keresztül érhetőek el, értesüljenek
+az esetleges szolgáltatáskiesésekről, konfigurációs változásokról.
+Ilyen szoftver pl. a Consul\cite{Consul}, ami egy Go alapú szoftver, elsősorban
+\emph{service registry}-ként, illetve konfigurációs adatbázisként működik,
+de képes akár az egyes komponensek működését is monitorozni.

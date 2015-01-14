@@ -1,0 +1,19 @@
+\section{LevelDB}
+
+A LevelDB a Google által fejlesztett beágyazható \emph{key-value} adatbázis
+könyvtár\cite{LevelDB}.
+Maga az adatbázis egy \emph{Map} adatszerkezet, ahol mind a kulcs,
+mind az érték tetszőleges byte-sorozat.
+
+3 alapvető műveletet támogat, \verb=put(key, value)=, \verb=get(key)= és
+\verb=delete(key)=, ezen felül képes több műveletet egy atomi műveletként
+végrehajtani, illetve a kulcsokon képes előre és hátrafelé iterálni.
+
+A megszokott relációs adatmodellt nem támogatja, az indexelés is csak a kulcsra
+megoldott, így minden bonyolultabb funkcionalitást a fejlesztőnek kell
+megvalósítania.
+
+Mivel az adatbázis nagyon egyszerű felépítésű, a teljesítménye a hagyományos
+SQL adatbázisokhoz képest várhatóan nagyságrendekkel jobb.
+Az általam írt szoftverben az adatok jellege nem követeli meg a relációs
+adatmodellt, így inkább a teljesítményt választottam a kényelemmel szemben.

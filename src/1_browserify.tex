@@ -1,0 +1,48 @@
+\section{\texttt{browserify}}
+
+A nagyobb méretű webes kliensoldali alkalmazások egyik nagy problémája,
+hogy a JavaScript nyelvi szinten nem ismeri a \emph{modul} fogalmát
+(bár jelenleg az ES6 részeként már kidolgozás alatt áll a
+specifikáció\cite{ES6-Modules}),
+így komplex szoftverek csak rendkívül kényelmetlenül írhatók benne.
+
+A problémára több megoldás is született, mindkét megközelítés a modul fogalmát
+ragadja meg, ezek közül az egyik a CommonJS, a másik pedig az AMD
+(Asynchronous Module Definition) specifikáció.
+Mindkettőre létezik több implementáció is (AMD API-t biztosít pl. a RequireJS).
+
+Mivel Node.JS környezetben a CommonJS a megszokott modul-implementáció, így
+kézenfekvő, hogy az alkalmazás kliens-oldali részéhez is érdemes ezt használni,
+ennek számos előnye van : pl. kódmegosztás, illetve maga a tény, hogy szinte
+ugyanaz a rendszer van mind kliens mind szerver oldalon (így az npm-ben lévő
+több tízezer csomag képes a böngészőben is futni).
+
+Az egyik legnépszerűbb eszköz a CommonJS modulok \emph{becsomagolására}
+a \verb=browserify=\cite{Browserify},
+ami képes a program minden függőségét egyetlen JavaScript fájlba csomagolni:
+
+\begin{sh}
+$ browserify app.js -o bundle.js
+\end{sh}
+
+Ahol az \verb=app.js= az alkalmazás belépési pontja, a \verb=bundle.js=
+pedig a kimeneti fájl. A program felderíti az alkalmazás függőségeit,
+azokat a megfelelő wrapper függvényekbe csomagolja, majd konkatenálja.
+
+\subsection{Inkrementális fordítás}
+
+Mivel a fordítási folyamat adott esetben néhány másodpercig is tarthat,
+így érdemes a \verb=watchify= csomagot\cite{Watchify}
+használni, ami képes az inkrementális fordításra,
+illetve a fájlok változása esetén automatikusan újrafordítja
+az alkalmazást, gyakorlatilag néhány milliszekundum alatt:
+
+\begin{sh}
+$ watchify app.js -o bundle.js
+\end{sh}
+
+A fordítási folyamat egyszerűen bővíthető pluginekkel, így a lefordított
+fájlhoz akár \emph{source map} is rendelhető, amivel a fordítás miatt
+keletkező debugolási problémák (nem lehet visszakövetni, hogy a lefordított,
+és akár minifikált fájlban az egyes szimbólumok hol vannak a forrásfájlokban)
+gyakorlatilag megszűnnek.

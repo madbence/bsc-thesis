@@ -1,0 +1,88 @@
+\section{Twitter API}
+
+A Twitterben rövid szöveges üzeneteket (\emph{tweet}, 140 karakter)
+publikálhatunk, követhetünk felhasználókat, akiknek a tweetjei ekkor
+megjelennek a saját falunkon.
+Lehetőség van direkt egy felhasználó tweetjeinek lekérdezésére,
+illetve a követőinek megtekintésére.
+
+Ezeket a funkciókat harmadik fél által írt alkalmazások is képesek elérni,
+a Twitter publikus API-ján keresztül.
+Az API \emph{restful}, az adatokat kényelmesen JSON formátumban el tudjuk érni.
+Az egyetlen hátrány, hogy az API hívások számára igen komoly korlátok
+vonatkoznak, negyed órás időablakokban csak adott számú API kérést lehet
+elküldeni az egyes végpontokba. Az API kérések egy token birtokában hajthatóak
+csak végre.
+
+Az API korlátok az API tokenhez rendeltek, így a limit sok felhasználó
+esetén sem jelent szűkebb keresztmetszetet, azonban azok így is
+nagyon szigorúak.
+
+Az alkalmazás két végpontot használ:
+
+\begin{description}
+  \item[\texttt{GET /followers/ids}] Egy adott felhasználó követőit listázza
+    ki JSON tömbként. A limit 15 hívás minden 15 percben, egy hívással
+    maximum 5000 követő azonosítója kérhető le. Szerencsére ez nem túl szűk
+    korlát, az átlag felhasználó nagyságrendileg nem rendelkezik ekkora
+    követő bázissal, de esetenként (pl. egy nagyobb brand esetén) szükség van
+    több lekérdezésre.
+  \item[\texttt{GET /statuses/user\_timeline}] Egy adott felhasználó legutolsó
+    tweetjeit listázza ki JSON formátumban, legfeljebb 3200 tweetre
+    visszamenőleg, azonban egy kéréssel maximum 200 tweet kérdezhető le.
+    Negyed óránként maximum 180 kérés hajtható végre.
+\end{description}
+
+A korlátokból leszűrhető, hogy a követők lekérdezésénél 55000 követő alatt
+nem ütközünk problémába (azonnal lekérdezhető), azonban az egyes követők
+tweetjeinek megszerzése komoly gondot jelent, negyed óránként maximum
+180 követő adatait tudjuk megszerezni. A megoldást erre az jelenti,
+ha több tokent is felhasználunk. Bár egy felhasználóhoz csak egy token
+tartozik, azok érvényessége nincs limitálva (bár a felhasználó
+a Twitter megfelelő felületén visszavonhatja), így azok tetszőlegesen
+újrafelhasználhatóak más felhasználók által létrehozott feladatok elvégzésére.
+
+A \verb=/followers/ids= végpont egy JSON objektumot ad vissza,
+ami az \verb=ids= kulcs alatt egy tömböt tartalmaz, a követők azonosítóival,
+illetve az eredmények közötti navigáláshoz egy \verb=next_cursor= mezőben
+a további követők (újabb 5000) lekérdezéséhez szükséges kurzor objektumot
+(a végpont opcionálisan elfogad egy \verb=cursor= paramétert).
+
+A \verb=/statuses/user_timeline= egy JSON tömböt ad vissza, amikben a tweet
+objektumok vannak. Az alkalmazás számára releváns mezők:
+
+\begin{description}
+  \item[\texttt{created\_at}] Az üzenet létrehozásának ideje, UTC idő szerint.
+  \item[\texttt{text}] Az esetleges későbbi elemzéshez eltároltam a tweet
+    szövegét is.
+  \item[\texttt{user.id} és \texttt{user.screen\_name}] A szerző azonosítója.
+  \item[\texttt{user.utc\_offset}] A felhasználó időzónája, az esetleges
+    további szegmentáláshoz.
+\end{description}
+
+Az API-hoz létezik az elérést megkönnyítő Node.JS modul, így az alkalmazásban
+azt használom. A \verb=twit= egyszerű hozzáférést biztosít a REST végpontokhoz,
+használatához csak a megfelelő tokenekre van szükség, amit az autentikáció
+során lehet megszerezni:
+
+\begin{js}
+var Twit = require('twit');
+var client = new Twit({
+  consumer_key: '...',
+  consumer_secret: '...',
+  access_token: '...',
+  access_token_secret: '...'
+});
+
+client.get('followers/ids', {
+  screen_name: '...'
+}, function (err, ids) {
+  // ...
+});
+\end{js}
+
+A modul elrejti előlünk a háttérben történő HTTP kérést, elvégzi a kérés
+aláírását (a megadott tokenekkel), szerializálja a metódusnak átadott
+paramétereket, végül a kapott választ JSON objektummá konvertálja.
+Az alkalmazában ezt a könyvtárait is egy wrapper függvényen keresztül
+használom, hogy a generátor-alapú aszinkron kód minél olvashatóbb legyen.

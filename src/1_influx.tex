@@ -1,0 +1,65 @@
+\section{InfluxDB}
+
+Az InfluxDB egy ún \emph{time-series} adatbázis, ami elsősorban időfüggő
+metrikák hatékony tárolására és elemzésére alkalmas\cite{InfluxDB}.
+Az adatokat lehetőség van különböző adatbázisokban perzisztálni,
+többek között akár LevelDB-n is.
+
+A szoftver lehetőséget nyújt a tárolt adatok komplex elemzésére, egy SQL-hez
+hasonló lekérdező nyelv segítségével, illetve a lekérdezés eredménye grafikusan
+is megjeleníthető, így egyszerű diagramok készítése beépítetten támogatott.
+
+Pl. ha szeretnénk perc felbontású adatokat kapni az alkalmazás átlagos
+válaszidejéről az elmúlt egy órából, az alábbi lekéréssel tehetjük meg:
+
+\begin{verbatim}
+select mean(response_time)
+from app
+group by time(1m)
+where time > now() - 1h
+\end{verbatim}
+
+Lehetőség van ún. \emph{continous query} futtatására is, ami arra szolgál,
+hogy a beérkező adatokat aggregálja, azaz tipikusan mintát vegyen belőle,
+és egy másik adatsorba továbbítsa. Ez utóbbi adatsor sokkal kisebb méretű,
+hiszen csak aggregált (alacsonyabb felbontású) adatok vannak benne,
+azonban a nagyobb mennyiségű adatok elemzését igénylő lekérdezések sebességét
+radikálisan megnöveli. Ha egy metrika másodperc felbontású (pl. aktuális
+CPU terhelés), egy éves időtávlatban valószínűleg nincs szükség ilyen
+pontos adatokra, elég az egy órás felbontás.
+Később, a nagyobb időintervallumokat használó lekérdezések nem közvetlenül
+a másodperc felbontású adatsoron hajtódnak végre, hanem csökkentett
+felbontásún, így egy kevés pontatlanság árán a töredékére csökkentettük
+a feldolgozási időt.
+
+Lehetőség van az adatok programozott lekérésére is külső API-n keresztül
+(HTTP JSON, illetve elérhető graphite-kompatibilis interfész is), így
+tetszőleges külső szoftverrel integrálható (ilyen például a Grafana).
+
+Az adatbázis atomi eseményeket fogad, ezekhez tetszőleges adatokat csatolhatunk,
+számos környezethez létezik integrációja (többet között Node.JS-hez is).
+Az elkészült szoftverben az \verb=influx= modult használom, ami kényelmes
+API-t biztosít az adatbázishoz.
+
+\begin{js}
+  var influx = require('influx');
+  var client = influx({
+    host: host,
+    port: 8086,
+    username: user,
+    password: pass,
+    database: db,
+  });
+
+  var data = {
+    time: new Date(),
+    attr1: val1,
+    attr2: val2,
+  };
+  client.writePoint(series, data, opts, callback);
+\end{js}
+
+A háttérben a \verb=writePoint= hívás egy HTTP POST kérésre fordul le,
+amit az adatbázis a REST API-ján keresztül tud fogadni.
+Lehetőség van egyszerre több adatpont bevitelére is, a \verb=writePoints=
+metódus segítségével.

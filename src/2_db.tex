@@ -1,0 +1,58 @@
+\section{Adatbázis szerver}
+
+Az adatbázis szerver feladata az alkalmazás állapotának számon tartása.
+Ezek közé tartozik az egyes \emph{business objektumok} perzisztálása,
+illetve ezek menedzselése egy egyszerű REST HTTP JSON interfészen keresztül.
+
+Az üzleti logika szempontjából releváns entitások a következők:
+
+\begin{description}
+  \item[user] a felhasználót reprezentáló objektum, a hozzá tartozó
+    legfontosabb információkkal (regisztráció időpontja, e-mail cím, stb),
+    illetve az elkészült statisztikákat is ebben az objektumban tárolom el.
+  \item[token] az egyes Twitter API hívásokhoz szükség van a autentikációs
+  tokenekre, ezeket a felhasználótól kapja meg az alkalmazás, az OAuth
+  autentikációs során. Fontos számon tartani az állapotát, hányszor lett
+  felhasználva, mikor lett utoljára felhasználva.
+  \item[tweet] a Twitter API válaszaiból leképzett objektumok, az alkalmazás
+  szempontjából az egyetlen releváns adata a tweet időpontja, hiszen ebből
+  határozza meg a szoftver az ideális időpontot a tartalom publikálására.
+  \item[job] az egyes elvégzendő háttérfeladatok. Az alkalmazás eltárolja a
+  a teljes életciklusát, tehát hogy mikor hozták létre, mikor került egy
+  feldolgozó egységhez, mikor végzett az vele. Természetesen a job állapota
+  is tárolva van, ezzel a többszörös végrehajtást lehet kivédeni.
+\end{description}
+
+Egy felhasználó létrehozásakor vele együtt létrejön egy \emph{fetch-followers}
+job is, ez indítja be az adott felhasználóhoz tartozó statisztikák
+összegyűjtését.
+
+Egy job létrehozásakor nem csak egy adatbázisrekord jön létre, hanem a
+hozzá tartozó üzenet bekerül a várakozási sorba (ez az üzenet egyszerűen
+a job azonosítóját tartalmazza), amit majd az épp aktív feldolgozóegységek
+végrehajtanak.
+
+A felhasználókhoz el van tárolva az aktív, illetve függőben lévő jobok
+száma. Mivel ezeket az értékeket inkrementálni kell, amit a LevelDB atomi
+műveletként nem támogat, így ezt nekem kellett megvalósítanom.
+Ehhez írtam meg a \verb=co-lock= modult, ami kölcsönös kizárást biztosít
+erőforrásokhoz, használata pedig a már megszokott \verb=yield= szintaktikával
+lehetséges:
+
+\begin{js}
+  var lock = require('co-lock');
+
+  var release = yield lock(resource);
+  // kritikus szakasz
+  yield release;
+\end{js}
+
+A háttérben a modul a \verb=resource= erőforráshoz egy zárat hoz létre,
+vagy ha az már zárolva van, akkor annak a \emph{várakozási sorába} lép be,
+a \verb=yield release= ezt a zárat engedi el, azaz a várakozási sorban
+következő hívás hajtódik végre.
+
+Zárak használatakor ügyelni kell a \emph{deadlock} elkerülésére.
+Szerencsére az alkalmazásban máshol nem volt szükség zárakra, ezért
+a deadlock nem fordulhat elő (hiszen ahhoz több erőforrásra van szükség,
+az adatbázis azonban műveletenként csak egyet használ).

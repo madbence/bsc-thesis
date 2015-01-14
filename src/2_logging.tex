@@ -1,0 +1,44 @@
+\section{Naplózás}
+
+A naplózást minden rendszer saját hatáskörében végzi el, azonban azokat
+egy közös helyre (InfluxDB) is beteszi. Így az adatok központilag elemezhetők,
+de lebonthatóak alkalmazásokra, hosztokra, folyamatokra.
+
+\subsection{HTTP kérés naplózás}
+
+A frontend szerver egyszerűen a beérkező HTTP kéréseket naplózza, ezek
+válaszidejét méri. Ez a gyakorlatban az OAuth-tal összefüggő kéréseket
+jelenti.
+
+\subsection{Adatbázis naplózás}
+
+Az adatbázis külön naplóz minden adathozzáférést, annak típusa szerint
+csoportosítva (írás, olvasás), illetve az erőforrás típusa (tweet, user, stb.)
+alapján. Ezen felül a HTTP interfészének válaszidejét is méri, így
+külön-külön mérhető az adatbázis, illetve a szerver válaszideje
+(a szerver válaszideje ekkor az adatbázis és a
+HTTP szerver \emph{overhead}jének összege).
+
+\subsection{Háttérfolyamatok}
+
+Az egyes végrehajtó folyamatok is monitorozzák az általuk végrehajtott
+feladatokat
+
+\begin{itemize}
+  \item Mennyi idő alatt hajtotta végre az adott feladatot
+  \item Mekkora volt a Twitter API válaszideje
+  \item Mennyi időt töltött a várakozási sorban, amíg sorra került
+  \item Hiba esetén naplózni kell a hiba eredetét (adatbázishiba,
+    vagy a Twitter hibája)
+\end{itemize}
+
+A feldolgozás során a Twitter számos hibát generál. Ezek túlnyomó többsége
+a privát Twitter felhasználók miatt van: az ő tweetjeit csak bizonyos
+emberek láthatják (akiknek előzetesen jóváhagyta), így ezeket az üzeneteket
+az API-ból sem tudjuk elérni. Ilyenkor jobb megoldás híján az adott
+\emph{fetch-tweets} jobot befejezettnek tekintjük.
+
+Fel kell készülni az olyan hibákra is, hogy az API (vagy éppen az adatbázis)
+elérhetetlen: ilyenkor a jobot nem szabad lezárni, újra be kell ütemezni.
+Ez praktikusan egy \verb=job.reject(true)= hívással történik meg, azaz
+a feladat visszakerül a feldolgozási sor elejére.

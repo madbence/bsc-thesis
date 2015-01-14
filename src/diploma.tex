@@ -1,0 +1,139 @@
+\documentclass[12pt,a4paper,oneside]{report}
+%\documentclass[12pt,a4paper,twoside,openright]{report}  % Duplex
+
+\usepackage{xltxtra}
+\usepackage{mathtools}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[top=25mm,right=25mm,bottom=25mm,left=35mm]{geometry}
+%\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\usepackage[hungarian,english]{babel}
+
+\usepackage{sectsty}
+\usepackage{setspace}
+\usepackage[hang]{caption}
+\usepackage{hyperref}
+\usepackage{minted}
+
+%------------------------------------------------------------------------------
+% Main variables
+%------------------------------------------------------------------------------
+\newcommand{\vikszerzo}{Dányi Bence}
+\newcommand{\vikkonzulens}{Gincsai Gábor}
+\newcommand{\vikcim}{Social média analitika elosztott környezetben}
+\newcommand{\viktanszek}{Automatizálási és Alkalmazott Informatika Tanszék}
+\newcommand{\vikdoktipus}{Szakdolgozat}
+
+%------------------------------------------------------------------------------
+% Page layout setup
+%------------------------------------------------------------------------------
+% we need to redefine the pagestyle plain another possibility is to use
+% the body of this command without \fancypagestyle and use \pagestyle{fancy}
+% but in that case the special pages (like the ToC, the References,
+% and the Chapter pages) remain in plane style.
+
+\pagestyle{plain}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{8pt plus 3pt minus 3pt}
+
+% \setcounter{secnumdepth}{0}
+% \sectionfont{\large\upshape\bfseries}
+\setcounter{secnumdepth}{2}
+\onehalfspacing
+
+%------------------------------------------------------------------------------
+% Setup hyperref package
+%------------------------------------------------------------------------------
+\hypersetup{
+    bookmarks=true,            % show bookmarks bar?
+    unicode=false,             % non-Latin characters in Acrobats bookmarks
+    pdftitle={\vikcim},        % title
+    pdfauthor={\vikszerzo},    % author
+    pdfsubject={\vikdoktipus}, % subject of the document
+    pdfcreator={\vikszerzo},   % creator of the document
+    pdfproducer={XeLaTeX},     % producer of the document
+    pdfkeywords={keywords},    % list of keywords
+    pdfnewwindow=true,         % links in new window
+    colorlinks=true,           % false: boxed links; true: colored links
+    linkcolor=black,           % color of internal links
+    citecolor=black,           % color of links to bibliography
+    filecolor=black,           % color of file links
+    urlcolor=black             % color of external links
+}
+
+%------------------------------------------------------------------------------
+% Some new commands and declarations
+%------------------------------------------------------------------------------
+
+% define references
+\newcommand{\figref}[1]{\ref{fig:#1}.}
+\renewcommand{\eqref}[1]{(\ref{eq:#1})}
+\newcommand{\listref}[1]{\ref{listing:#1}.}
+\newcommand{\secref}[1]{\ref{sec:#1}}
+\newcommand{\tabref}[1]{\ref{tab:#1}.}
+
+\newminted[js]{javascript}{fontsize=\footnotesize}
+\newminted[jade]{jade}{fontsize=\footnotesize}
+\newminted[html]{html}{fontsize=\footnotesize}
+\newminted[sh]{sh}{fontsize=\footnotesize}
+\newminted[css]{css}{fontsize=\footnotesize}
+\newminted[stylus]{jade}{fontsize=\footnotesize}
+
+\author{\vikszerzo}
+\title{\viktitle}
+
+\includeonly{
+  % project,%
+  titlepage,%
+  declaration,%
+  abstract,%
+  introduction,%
+  chapter1,%
+  chapter2,%
+  chapter3,%
+}
+
+%------------------------------------------------------------------------------
+% Setup captions
+%------------------------------------------------------------------------------
+\captionsetup[figure]{
+%labelsep=none,
+%font={footnotesize,it},
+%justification=justified,
+width=.75\textwidth,
+aboveskip=10pt}
+
+\renewcommand{\captionlabelfont}{\small\bf}
+\renewcommand{\captionfont}{\footnotesize\it}
+
+%------------------------------------------------------------------------------
+% Table of contents and the main text
+%------------------------------------------------------------------------------
+\begin{document}
+\addtocontents{toc}{\protect\setstretch{0.9}}
+\selectlanguage{hungarian}
+\pagenumbering{arabic}
+% \include{project}
+\include{titlepage}
+\tableofcontents\vfill
+\include{declaration}
+\include{abstract}
+\include{introduction}
+\include{chapter1}
+\include{chapter2}
+\include{chapter3}
+
+\listoffigures\addcontentsline{toc}{chapter}{Ábrák jegyzéke}
+% \listoftables\addcontentsline{toc}{chapter}{Táblázatok jegyzéke}
+
+\bibliography{bib/mybib}
+\addcontentsline{toc}{chapter}{Irodalomjegyzék}
+\bibliographystyle{plain}
+
+A hivatkozott internetes források utolsó hozzáférési ideje: \today
+
+\label{page:last}
+\end{document}
